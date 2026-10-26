@@ -137,6 +137,19 @@ actually serves requests. If the container was started some other way (or is alr
 `npm run parabank:wait` before the tests. Without `REGION=local` (or `REGION=local` in `.env`), tests
 target the public demo instead.
 
+### Full coverage across all regions
+
+`npm test` runs one region per run (the one in `REGION`). To run the full suite for every region, point
+each region at the local ParaBank with `BASE_URL`. Each region keeps its own locale, currency, limits and
+generated data, without the public demo's rate limiting:
+
+```bash
+for r in local us eu uk; do REGION=$r BASE_URL=http://localhost:8080/parabank npm test; done
+```
+
+Expect 33 passed per region. Each region writes its own report: open one with, for example,
+`REGION=eu npm run report`.
+
 | Command | What it runs |
 |---|---|
 | `npm test` | All layers, all browsers, region from `REGION` (default `us`) |
