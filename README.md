@@ -4,7 +4,7 @@ A Playwright + TypeScript test framework for **ParaBank** covering two independe
 **API** and **Web**, that share one core (config, data, utilities, reporting) and switch region by
 configuration alone.
 
-**Run it** (needs Node.js 20+ and Docker running; details and Windows commands in [§5](#5-running-locally)):
+**Run it** (needs Node.js 20.19+ and Docker running; details and Windows commands in [§5](#5-running-locally)):
 
 ```bash
 npm install && npx playwright install chromium firefox
@@ -118,7 +118,7 @@ Tag `@smoke` marks one fast test per area: `npm run test:smoke`.
 ## 5. Running locally
 
 **Prerequisites:**
-- **Node.js 20+** (`node -v` to check).
+- **Node.js 20.19+ or 22.13+** (`node -v` to check; required by Faker 10). Node 22 LTS or newer is recommended.
 - **Docker, installed and running** for the `local` region, e.g. the Docker Desktop app open with its
   engine started. `docker ps` should answer without an error.
 
@@ -192,6 +192,7 @@ Set `DEBUG_LOGS=1` for verbose per-test logging.
 
 | Symptom | Cause | Fix |
 |---|---|---|
+| `ERR_REQUIRE_ESM` / `require() of ES Module` on startup | Node.js older than 20.19 / 22.13 | Upgrade Node (22 LTS or newer recommended), then `npm ci` |
 | `Cannot connect to the Docker daemon` | Docker isn't running | Start Docker (e.g. open Docker Desktop), wait until it's ready, retry |
 | `The container name "/parabank" is already in use` | ParaBank is already running | Nothing to fix: run `npm run parabank:wait`, then the tests. For a fresh start: `npm run parabank:down`, then `npm run parabank:up` |
 | `port is already allocated` (8080) | Another app or Docker engine is using port 8080 | Stop whatever uses it (`docker ps` shows other containers), then retry |

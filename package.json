@@ -17,16 +17,16 @@
     "parabank:down": "docker stop parabank"
   },
   "devDependencies": {
-    "@faker-js/faker": "^9.0.3",
+    "@faker-js/faker": "^10.6.0",
     "@playwright/test": "^1.48.2",
     "@types/node": "^22.7.5",
     "dotenv": "^16.4.5",
     "eslint": "^9.12.0",
     "typescript": "^5.6.3",
     "typescript-eslint": "^8.8.1",
-    "zod": "^3.23.8"
+    "zod": "^4.6.7"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.19"
   }
 }

@@ -7,7 +7,7 @@ import { z } from 'zod';
 export const RegionConfigSchema = z.object({
   name: z.string().min(1),
   /** Root of the ParaBank web app, e.g. https://parabank.parasoft.com/parabank */
-  baseUrl: z.string().url(),
+  baseUrl: z.url(),
   /** REST API path relative to baseUrl */
   apiPath: z.string().startsWith('/'),
   /** BCP-47 locale used for generated test data and money formatting */
