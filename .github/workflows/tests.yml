@@ -135,6 +135,9 @@ jobs:
       options: --user 1001
     strategy:
       fail-fast: false
+      # Same reason as the API jobs: us/eu/uk share one rate-limited public host. Run #12 started all
+      # 8 Web jobs at once and the last tests in eu/uk Firefox timed out in setup on 429s.
+      max-parallel: 2
       matrix:
         region: ${{ fromJSON(needs.plan.outputs.web_regions) }}
         browser: ${{ fromJSON(needs.plan.outputs.web_browsers) }}
