@@ -1,5 +1,5 @@
 import { test as base } from '@playwright/test';
-import { config, type RegionConfig } from '@config';
+import { config, type ResolvedRegion } from '@config';
 import { createLogger, type Logger } from './logger';
 import { buildCustomer, type NewCustomer } from './data/customer.factory';
 import { validTransferAmount } from './data/transfer.factory';
@@ -10,7 +10,7 @@ export interface DataFactory {
 }
 
 export interface CoreFixtures {
-  region: RegionConfig;
+  region: ResolvedRegion;
   log: Logger;
   data: DataFactory;
 }

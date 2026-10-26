@@ -17,7 +17,15 @@ test.describe('Login (Web)', () => {
     await expect(overviewPage.row(checking.id)).toBeVisible();
   });
 
-  test('wrong password shows an error and stays logged out', async ({ loginPage, seededCustomer }) => {
+  test('wrong password shows an error and stays logged out', async ({ loginPage, seededCustomer, region }, testInfo) => {
+    // Asserts correct behaviour everywhere. Deployments with a known defect here (see
+    // config/expectations.ts, e.g. the public instance: PB-008) are expected to fail.
+    const defect = region.expectations.invalidLoginDefect;
+    if (defect) {
+      knownIssue(testInfo, defect.id, defect.summary);
+      test.fail(true, `${defect.id}: ${defect.summary}`);
+    }
+
     await loginPage.goto();
     await loginPage.login(seededCustomer.credentials.username, 'definitely-wrong');
 

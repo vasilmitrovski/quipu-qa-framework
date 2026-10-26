@@ -89,6 +89,12 @@ limits), money formatting in logs/reports, and report/artifact folders (`playwri
 formatting helpers, not UI currency assertions. Against a real multi-region product, `parseUiMoney`
 would become locale-aware using the same config.
 
+**Deployment-specific defects:** some defects exist on only one ParaBank deployment. They're listed in
+`config/expectations.ts`, keyed by the host the tests actually hit, not in the tests. Tests always assert
+the correct behaviour, and on an affected host they're marked `test.fail()` with the issue id. For
+example, the public instance lets a wrong password log in (PB-008), while a private instance rejects it.
+Pointing any region at another host with `BASE_URL` picks up that host's behaviour automatically.
+
 **Adding a region:** create `config/regions/<name>.ts`, register it in `config/index.ts`, and add it to
 the `ALL` list in the workflow. That's all. `BASE_URL` can also override any region's host ad hoc.
 
@@ -228,7 +234,9 @@ Set `DEBUG_LOGS=1` for verbose per-test logging.
 See [docs/known-issues.md](docs/known-issues.md): negative transfers accepted (PB-001), overdraft
 allowed (PB-002), no transfer idempotency (PB-003), `createAccount` returning a stale balance (PB-004),
 protected pages returning 500 when logged out (PB-005), any over-length registration field misreported as
-"username already exists" (PB-006), and registration races under concurrency (PB-007). Environment
+"username already exists" (PB-006), registration races under concurrency (PB-007), and, on the public
+instance only, a login form that doesn't check the password: a wrong password logs in or lands on an
+HTTP 500 page (PB-008). Environment
 issues: shared DB resets, occasional 500s, Cloudflare rate limiting, XML-by-default responses, no REST
 registration endpoint, and a registration form that requires a prior GET. The doc also explains how PB-006
 and PB-007 were tracked down from intermittent failures.
