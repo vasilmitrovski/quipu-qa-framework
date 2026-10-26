@@ -1,20 +1,19 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "preserve",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@config": ["config/index.ts"],
-      "@config/*": ["config/*"],
-      "@core/*": ["src/core/*"],
-      "@api/*": ["src/api/*"],
-      "@web/*": ["src/web/*"]
+      "@config": ["./config/index.ts"],
+      "@config/*": ["./config/*"],
+      "@core/*": ["./src/core/*"],
+      "@api/*": ["./src/api/*"],
+      "@web/*": ["./src/web/*"]
     },
     "types": ["node"]
   },

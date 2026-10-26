@@ -119,8 +119,23 @@ Tag `@smoke` marks one fast test per area: `npm run test:smoke`.
 ```bash
 npm install
 npx playwright install chromium firefox
-cp .env.example .env               # optional: set a default REGION
+cp .env.example .env               # optional: set a default REGION (e.g. REGION=local)
 ```
+
+### Quick start against a local ParaBank (recommended)
+
+```bash
+npm run parabank:up                # start ParaBank in Docker and wait until it's ready
+REGION=local npm test              # 33 tests, ~15 s
+npm run report                     # open the HTML report for REGION
+npm run parabank:down              # stop it when done
+```
+
+A fresh ParaBank container needs up to a minute to boot and create its database. Until then some pages
+already answer, but registration fails with HTTP 500. `parabank:up` therefore waits until the app
+actually serves requests. If the container was started some other way (or is already running), run
+`npm run parabank:wait` before the tests. Without `REGION=local` (or `REGION=local` in `.env`), tests
+target the public demo instead.
 
 | Command | What it runs |
 |---|---|
@@ -131,8 +146,9 @@ cp .env.example .env               # optional: set a default REGION
 | `npm run test:smoke` | `@smoke` tests only (API + Chromium), the gentle option for the public demo |
 | `WORKERS=4 npm test` | Override the region's worker count (only sensible on a private deployment) |
 | `REGION=uk npm run test:api` | Any command, any region |
-| `npm run parabank:up` / `parabank:down` | Start/stop ParaBank in Docker for `REGION=local` |
-| `npm run report` | Open the last HTML report |
+| `npm run parabank:up` / `parabank:down` | Start (and wait for) / stop ParaBank in Docker for `REGION=local` |
+| `npm run parabank:wait` | Wait until an already-started ParaBank is ready |
+| `npm run report` | Open the last HTML report for `REGION` (reports are kept per region in `playwright-report/<region>`) |
 | `npm run typecheck` / `npm run lint` | Static checks (including the layer dependency rule) |
 
 Set `DEBUG_LOGS=1` for verbose per-test logging.

@@ -9,10 +9,11 @@
     "test:web": "playwright test --project=web-chromium --project=web-firefox",
     "test:web:chromium": "playwright test --project=web-chromium",
     "test:smoke": "playwright test --grep @smoke --project=api --project=web-chromium",
-    "report": "playwright show-report",
+    "report": "node scripts/show-report.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "parabank:up": "docker run -d --rm --name parabank -p 8080:8080 parasoft/parabank",
+    "parabank:up": "docker run -d --rm --name parabank -p 8080:8080 parasoft/parabank && npm run -s parabank:wait",
+    "parabank:wait": "node .github/scripts/wait-for-parabank.mjs",
     "parabank:down": "docker stop parabank"
   },
   "devDependencies": {
