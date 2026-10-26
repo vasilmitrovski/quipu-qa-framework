@@ -59,7 +59,7 @@ test.describe('Accounts API', () => {
     expect(created.balance).toBe(stored.balance);
   });
 
-  test('reading an account is idempotent', async ({ api, accountPair }) => {
+  test('idempotency: reading an account returns the same data every time @idempotency', async ({ api, accountPair }) => {
     const first = await api.accounts.getOrThrow(accountPair.from.id);
     const second = await api.accounts.getOrThrow(accountPair.from.id);
     const third = await api.accounts.getOrThrow(accountPair.from.id);

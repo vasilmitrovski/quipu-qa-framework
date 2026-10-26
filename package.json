@@ -9,6 +9,7 @@
     "test:web": "playwright test --project=web-chromium --project=web-firefox",
     "test:web:chromium": "playwright test --project=web-chromium",
     "test:smoke": "playwright test --grep @smoke --project=api --project=web-chromium",
+    "test:edge": "playwright test --grep \"@edge|@idempotency\"",
     "report": "node scripts/show-report.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

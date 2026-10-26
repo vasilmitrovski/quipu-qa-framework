@@ -24,7 +24,7 @@ test.describe('Auth API', () => {
   });
 
   for (const field of ['username', 'phoneNumber'] as const) {
-    test(`edge: a ${field} longer than 20 characters gets an accurate error`, async ({ api, data }, testInfo) => {
+    test(`edge: a ${field} longer than 20 characters gets an accurate error @edge`, async ({ api, data }, testInfo) => {
       knownIssue(testInfo, 'PB-006', `${field} over 20 chars is rejected as "This username already exists"`);
       test.fail(true, 'PB-006: over-length values get a misleading "already exists" error');
       const unique = Date.now().toString(36).slice(-6);

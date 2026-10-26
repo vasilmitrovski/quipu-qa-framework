@@ -25,7 +25,7 @@ test.describe('Login (Web)', () => {
     await expect(loginPage.nav.link('Log Out')).toHaveCount(0);
   });
 
-  test('edge: submitting empty credentials shows a validation error', async ({ loginPage }) => {
+  test('edge: submitting empty credentials shows a validation error @edge', async ({ loginPage }) => {
     await loginPage.goto();
     await loginPage.submit.click();
 

@@ -34,7 +34,7 @@ test.describe('Transfer API', () => {
     expect(toCents(fromAfter.balance)).toBe(toCents(from.balance));
   });
 
-  test('edge: a one-cent transfer keeps exact decimal precision', async ({ api, accountPair }) => {
+  test('edge: a one-cent transfer keeps exact decimal precision @edge', async ({ api, accountPair }) => {
     const { from, to } = accountPair;
 
     (await api.transfers.transfer(from.id, to.id, 0.01)).ensureOk();
@@ -45,7 +45,7 @@ test.describe('Transfer API', () => {
     expect(toCents(toAfter.balance) - toCents(to.balance)).toBe(1);
   });
 
-  test('idempotency: repeating a transfer request applies it twice', async ({ api, accountPair }, testInfo) => {
+  test('idempotency: repeating a transfer request applies it twice @idempotency', async ({ api, accountPair }, testInfo) => {
     knownIssue(testInfo, 'PB-003', 'POST /transfer has no idempotency key; retries double-charge');
     const { from, to } = accountPair;
     const amount = 7.77;
@@ -64,7 +64,7 @@ test.describe('Transfer API', () => {
     expect(toCents(fromAfter.balance)).toBe(toCents(from.balance - 2 * amount));
   });
 
-  test('edge: a negative amount is rejected', async ({ api, accountPair }, testInfo) => {
+  test('edge: a negative amount is rejected @edge', async ({ api, accountPair }, testInfo) => {
     knownIssue(testInfo, 'PB-001', 'Negative transfer amounts are accepted and reverse the money flow');
     test.fail(true, 'PB-001: ParaBank accepts negative transfer amounts');
     const { from, to } = accountPair;
@@ -76,7 +76,7 @@ test.describe('Transfer API', () => {
     expect(toCents(toAfter.balance)).toBe(toCents(to.balance));
   });
 
-  test('edge: a transfer larger than the balance is rejected', async ({ api, accountPair }, testInfo) => {
+  test('edge: a transfer larger than the balance is rejected @edge', async ({ api, accountPair }, testInfo) => {
     knownIssue(testInfo, 'PB-002', 'Transfers exceeding the available balance are accepted (overdraft)');
     test.fail(true, 'PB-002: ParaBank allows overdrawing an account via transfer');
     const { from, to } = accountPair;

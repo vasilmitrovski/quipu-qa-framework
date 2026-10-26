@@ -102,7 +102,13 @@ the `ALL` list in the workflow. That's all. `BASE_URL` can also override any reg
 | Web uses API | — | `transfer.spec.ts`: accounts created via API → transfer in UI → balances verified via API. `open-account.spec.ts`: UI action verified via API. Overview balances compared with API |
 | Schema validation | `accounts.spec.ts`: customer, account list, account and transactions validated with Zod | — |
 
-Tag `@smoke` marks one fast test per area: `npm run test:smoke`.
+**Tags** (filter with `--grep`; they also show as labels in the HTML report):
+
+| Tag | Marks | Run |
+|---|---|---|
+| `@smoke` | One fast test per area | `npm run test:smoke` |
+| `@edge` | Edge cases: 1-cent precision, negative and over-balance amounts, over-length fields, empty login | `npm run test:edge` (with `@idempotency`) |
+| `@idempotency` | Repeated reads, a repeated transfer request, reload/back/forward after a UI transfer | `npm run test:edge` (with `@edge`), or `npx playwright test --grep @idempotency` |
 
 ### Verified results (2026-10-26)
 
@@ -179,6 +185,7 @@ commands are provided for convenience.
 | `npm run test:web` | Web layer (Chromium + Firefox) |
 | `npm run test:web:chromium` | Web layer, Chromium only |
 | `npm run test:smoke` | `@smoke` tests only (API + Chromium), the gentle option for the public demo |
+| `npm run test:edge` | `@edge` and `@idempotency` tests only (API + Web) |
 | `WORKERS=4 npm test` | Override the region's worker count (only sensible on a private deployment) |
 | `REGION=uk npm run test:api` | Any command, any region |
 | `npm run parabank:up` / `parabank:down` | Start (and wait for) / stop ParaBank in Docker for `REGION=local` |

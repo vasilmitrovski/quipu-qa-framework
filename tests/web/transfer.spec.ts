@@ -31,7 +31,7 @@ test.describe('Transfer funds (Web)', () => {
     await expect(loggedInPage).toHaveURL(/overview\.htm/);
   });
 
-  test('idempotency: reloading after a transfer does not repeat it', async ({ loggedInPage, transferPage, api, accountPair }) => {
+  test('idempotency: reloading after a transfer does not repeat it @idempotency', async ({ loggedInPage, transferPage, api, accountPair }) => {
     const { from, to } = accountPair;
     const amount = 5.55;
 
