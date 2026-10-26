@@ -13,7 +13,8 @@ export function resolveRegion(name = process.env.REGION ?? 'us'): RegionConfig {
   if (!region) {
     throw new Error(`Unknown REGION "${name}". Known regions: ${Object.keys(regions).join(', ')}`);
   }
-  const merged = { ...region, baseUrl: process.env.BASE_URL ?? region.baseUrl };
+  // `||` not `??`: CI passes BASE_URL='' when no override applies.
+  const merged = { ...region, baseUrl: process.env.BASE_URL || region.baseUrl };
   return RegionConfigSchema.parse(merged);
 }
 

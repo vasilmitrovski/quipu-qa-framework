@@ -71,10 +71,10 @@ jobs:
     name: Typecheck & lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
       - name: Install dependencies
         run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - run: npm run typecheck
@@ -87,6 +87,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      # us/eu/uk all hit the same rate-limited public host; running them all at once trips Cloudflare.
+      max-parallel: 2
       matrix:
         region: ${{ fromJSON(needs.plan.outputs.api_regions) }}
     services:
@@ -99,20 +101,20 @@ jobs:
       REGION: ${{ matrix.region }}
       CI: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
       - name: Install dependencies
         run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
       - name: Wait for local ParaBank
         if: matrix.region == 'local'
-        run: ./.github/scripts/wait-for-parabank.sh http://localhost:8080/parabank
+        run: node .github/scripts/wait-for-parabank.mjs http://localhost:8080/parabank
       - name: Run API tests
         run: npx playwright test --project=api ${{ (needs.plan.outputs.smoke_only_public == 'true' && matrix.region != 'local') && '--grep @smoke' || '' }}
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: report-api-${{ matrix.region }}
           path: |
@@ -126,6 +128,11 @@ jobs:
     needs: [plan, static]
     if: needs.plan.outputs.run_web == 'true'
     runs-on: ubuntu-latest
+    # Official image with browsers and system deps pre-installed: no slow apt-get step.
+    # Keep the tag in sync with @playwright/test in package-lock.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+      options: --user 1001
     strategy:
       fail-fast: false
       matrix:
@@ -134,28 +141,23 @@ jobs:
     services:
       parabank:
         image: ${{ matrix.region == 'local' && 'parasoft/parabank' || '' }}
-        ports:
-          - 8080:8080
     env:
       REGION: ${{ matrix.region }}
       CI: true
+      # From inside the job container the service is reachable by its name, not localhost.
+      BASE_URL: ${{ matrix.region == 'local' && 'http://parabank:8080/parabank' || '' }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
+      - uses: actions/checkout@v5
       - name: Install dependencies
         run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
-      - name: Install browser
-        run: npx playwright install --with-deps ${{ matrix.browser }}
       - name: Wait for local ParaBank
         if: matrix.region == 'local'
-        run: ./.github/scripts/wait-for-parabank.sh http://localhost:8080/parabank
+        run: node .github/scripts/wait-for-parabank.mjs http://parabank:8080/parabank
       - name: Run Web tests
         run: npx playwright test --project=web-${{ matrix.browser }} ${{ (needs.plan.outputs.smoke_only_public == 'true' && matrix.region != 'local') && '--grep @smoke' || '' }}
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: report-web-${{ matrix.region }}-${{ matrix.browser }}
           path: |

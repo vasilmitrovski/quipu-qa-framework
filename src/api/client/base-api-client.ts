@@ -79,18 +79,17 @@ export class BaseApiClient {
         responseBody: text.slice(0, 2_000),
       });
 
-      // Rate limiting / temporary unavailability is an environment condition, not a product response.
-      // Only these are retried, so a retried POST can never double-apply a request the server processed.
-      if (RETRYABLE_STATUSES.has(status) && attempt < maxRetries) {
+      const apiResponse = new ApiResponse(method, fullUrl, status, response.headers(), text);
+      // Edge rate limiting (429, or a Cloudflare-served 403) and 503 are environment conditions, not
+      // product responses. The request never reached the app, so retrying can't double-apply a POST.
+      if ((apiResponse.blockedByEnvironment || status === 503) && attempt < maxRetries) {
         await sleep(retryDelayMs(response.headers()['retry-after'], baseDelayMs, attempt));
         continue;
       }
-      return new ApiResponse(method, fullUrl, status, response.headers(), text);
+      return apiResponse;
     }
   }
 }
-
-const RETRYABLE_STATUSES = new Set([429, 503]);
 
 function retryDelayMs(retryAfter: string | undefined, baseDelayMs: number, attempt: number): number {
   const seconds = Number(retryAfter);
