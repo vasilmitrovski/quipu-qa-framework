@@ -4,10 +4,13 @@ A Playwright + TypeScript test framework for **ParaBank** covering two independe
 **API** and **Web**, that share one core (config, data, utilities, reporting) and switch region by
 configuration alone.
 
+**Run it** (needs Node.js 20+ and Docker running; details and Windows commands in [§5](#5-running-locally)):
+
 ```bash
 npm install && npx playwright install chromium firefox
-REGION=eu npm run test:api        # one layer, one region
-REGION=local npm test             # everything against a local Docker ParaBank
+npm run parabank:up               # start a private ParaBank in Docker and wait until it's ready
+REGION=local npm test             # full suite: API + Web on Chromium and Firefox (33 tests)
+npm run parabank:down             # stop ParaBank when done
 ```
 
 ---
@@ -114,7 +117,10 @@ Tag `@smoke` marks one fast test per area: `npm run test:smoke`.
 
 ## 5. Running locally
 
-**Prerequisites:** Node.js 20+ and, for the `local` region, Docker.
+**Prerequisites:**
+- **Node.js 20+** (`node -v` to check).
+- **Docker, installed and running** for the `local` region, e.g. the Docker Desktop app open with its
+  engine started. `docker ps` should answer without an error.
 
 ```bash
 npm install
@@ -150,6 +156,22 @@ for r in local us eu uk; do REGION=$r BASE_URL=http://localhost:8080/parabank np
 Expect 33 passed per region. Each region writes its own report: open one with, for example,
 `REGION=eu npm run report`.
 
+### Windows
+
+The `npm run …` scripts work as-is, but `REGION=local npm test` and the `for` loop above are macOS/Linux
+shell syntax. In **PowerShell**:
+
+```powershell
+$env:REGION="local"; npm test
+
+foreach ($r in "local","us","eu","uk") { $env:REGION=$r; $env:BASE_URL="http://localhost:8080/parabank"; npm test }
+Remove-Item Env:BASE_URL           # clear the override afterwards
+```
+
+Alternatively, put `REGION=local` in `.env` (then plain `npm test` uses it), or use Git Bash or WSL and
+run the commands above unchanged. The suite is verified on macOS and on Linux (CI); these Windows
+commands are provided for convenience.
+
 | Command | What it runs |
 |---|---|
 | `npm test` | All layers, all browsers, region from `REGION` (default `us`) |
@@ -165,6 +187,19 @@ Expect 33 passed per region. Each region writes its own report: open one with, f
 | `npm run typecheck` / `npm run lint` | Static checks (including the layer dependency rule) |
 
 Set `DEBUG_LOGS=1` for verbose per-test logging.
+
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `Cannot connect to the Docker daemon` | Docker isn't running | Start Docker (e.g. open Docker Desktop), wait until it's ready, retry |
+| `The container name "/parabank" is already in use` | ParaBank is already running | Nothing to fix: run `npm run parabank:wait`, then the tests. For a fresh start: `npm run parabank:down`, then `npm run parabank:up` |
+| `port is already allocated` (8080) | Another app or Docker engine is using port 8080 | Stop whatever uses it (`docker ps` shows other containers), then retry |
+| `POST …/register.htm -> 500` on `localhost` | ParaBank was still starting | `npm run parabank:wait`, then re-run the tests |
+| URLs show `parabank.parasoft.com`, or the run takes minutes | `REGION` isn't `local`, so tests hit the public demo | Prefix `REGION=local` or set it in `.env` |
+| `[environment] … 403` / `429` | The public demo's Cloudflare rate limiting (not a test failure) | Use `REGION=local`, or wait a few minutes and re-run `npm run test:smoke -- --retries=2` |
+| Red ✘ on *"a negative amount is rejected"* and similar | Known ParaBank defects marked `test.fail()`, counted as passed | None: check the summary line says passed, see [docs/known-issues.md](docs/known-issues.md) |
+| `npm run report` says no report found | No run yet for that `REGION` | Run the tests for that region first |
 
 ## 6. CI (GitHub Actions)
 
