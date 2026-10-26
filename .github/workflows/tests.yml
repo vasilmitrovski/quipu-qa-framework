@@ -1,0 +1,165 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 3 * * *' # nightly full matrix
+  workflow_dispatch:
+    inputs:
+      layer:
+        description: Which layer to run
+        type: choice
+        options: [all, api, web]
+        default: all
+      region:
+        description: Which region to run
+        type: choice
+        options: [all, us, eu, uk, local]
+        default: all
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  plan:
+    name: Plan matrix
+    runs-on: ubuntu-latest
+    outputs:
+      run_api: ${{ steps.plan.outputs.run_api }}
+      run_web: ${{ steps.plan.outputs.run_web }}
+      api_regions: ${{ steps.plan.outputs.api_regions }}
+      web_regions: ${{ steps.plan.outputs.web_regions }}
+      web_browsers: ${{ steps.plan.outputs.web_browsers }}
+      smoke_only_public: ${{ steps.plan.outputs.smoke_only_public }}
+    steps:
+      - id: plan
+        shell: bash
+        run: |
+          ALL='["us","eu","uk","local"]'
+          LAYER="${{ github.event.inputs.layer || 'all' }}"
+          REGION="${{ github.event.inputs.region || '' }}"
+          EVENT="${{ github.event_name }}"
+
+          if [[ -n "$REGION" && "$REGION" != "all" ]]; then
+            API_REGIONS="[\"$REGION\"]"; WEB_REGIONS="[\"$REGION\"]"
+          elif [[ "$EVENT" == "schedule" || "$EVENT" == "workflow_dispatch" ]]; then
+            API_REGIONS="$ALL"; WEB_REGIONS="$ALL"
+          else
+            # PR / push: API is cheap, so cover every region; Web runs against the isolated Docker region.
+            API_REGIONS="$ALL"; WEB_REGIONS='["local"]'
+          fi
+
+          if [[ "$EVENT" == "schedule" || "$EVENT" == "workflow_dispatch" ]]; then
+            BROWSERS='["chromium","firefox"]'; SMOKE_ONLY_PUBLIC=false
+          else
+            # The public demo sits behind Cloudflare rate limiting: PRs run only @smoke there,
+            # and the full suite against the isolated `local` container.
+            BROWSERS='["chromium"]'; SMOKE_ONLY_PUBLIC=true
+          fi
+          echo "smoke_only_public=$SMOKE_ONLY_PUBLIC" >> "$GITHUB_OUTPUT"
+
+          echo "run_api=$([[ "$LAYER" == "all" || "$LAYER" == "api" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "run_web=$([[ "$LAYER" == "all" || "$LAYER" == "web" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "api_regions=$API_REGIONS" >> "$GITHUB_OUTPUT"
+          echo "web_regions=$WEB_REGIONS" >> "$GITHUB_OUTPUT"
+          echo "web_browsers=$BROWSERS" >> "$GITHUB_OUTPUT"
+
+  static:
+    name: Typecheck & lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - run: npm run typecheck
+      - run: npm run lint
+
+  api:
+    name: API (${{ matrix.region }})
+    needs: [plan, static]
+    if: needs.plan.outputs.run_api == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        region: ${{ fromJSON(needs.plan.outputs.api_regions) }}
+    services:
+      parabank:
+        # Empty image = no service; only the `local` region gets its own ParaBank container.
+        image: ${{ matrix.region == 'local' && 'parasoft/parabank' || '' }}
+        ports:
+          - 8080:8080
+    env:
+      REGION: ${{ matrix.region }}
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - name: Wait for local ParaBank
+        if: matrix.region == 'local'
+        run: ./.github/scripts/wait-for-parabank.sh http://localhost:8080/parabank
+      - name: Run API tests
+        run: npx playwright test --project=api ${{ (needs.plan.outputs.smoke_only_public == 'true' && matrix.region != 'local') && '--grep @smoke' || '' }}
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-api-${{ matrix.region }}
+          path: |
+            playwright-report/
+            test-results/
+            reports/
+          retention-days: 14
+
+  web:
+    name: Web (${{ matrix.region }}, ${{ matrix.browser }})
+    needs: [plan, static]
+    if: needs.plan.outputs.run_web == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        region: ${{ fromJSON(needs.plan.outputs.web_regions) }}
+        browser: ${{ fromJSON(needs.plan.outputs.web_browsers) }}
+    services:
+      parabank:
+        image: ${{ matrix.region == 'local' && 'parasoft/parabank' || '' }}
+        ports:
+          - 8080:8080
+    env:
+      REGION: ${{ matrix.region }}
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: if [ -f package-lock.json ]; then npm ci; else npm install; fi
+      - name: Install browser
+        run: npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Wait for local ParaBank
+        if: matrix.region == 'local'
+        run: ./.github/scripts/wait-for-parabank.sh http://localhost:8080/parabank
+      - name: Run Web tests
+        run: npx playwright test --project=web-${{ matrix.browser }} ${{ (needs.plan.outputs.smoke_only_public == 'true' && matrix.region != 'local') && '--grep @smoke' || '' }}
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-web-${{ matrix.region }}-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+            reports/
+          retention-days: 14
