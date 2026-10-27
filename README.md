@@ -193,6 +193,7 @@ commands are provided for convenience.
 | `npm run test:smoke` | `@smoke` tests only (API + Chromium), the gentle option for the public demo |
 | `npm run test:edge` | `@edge` and `@idempotency` tests only (API + Web) |
 | `REGION=local npx playwright test --project=web-chromium --headed` | Web tests in a visible Chromium window, to watch the real browser click through the site |
+| `REGION=local npx playwright test --ui` | Playwright UI mode: browse all tests, run any of them, and inspect each step (screenshots, network, errors) |
 | `WORKERS=4 npm test` | Override the region's worker count (only sensible on a private deployment) |
 | `REGION=uk npm run test:api` | Any command, any region |
 | `npm run parabank:up` / `parabank:down` | Start (and wait for) / stop ParaBank in Docker for `REGION=local` |
