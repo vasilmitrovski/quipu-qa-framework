@@ -253,4 +253,3 @@ See [docs/mobile-design.md](docs/mobile-design.md). In short: a WebdriverIO + Ap
 - Contract tests that pin the schemas to a versioned OpenAPI spec.
 - A `test.step` wrapper that logs region-formatted amounts in the report.
 - Accessibility checks (`@axe-core/playwright`) on key pages.
-- Merged multi-region HTML report (Playwright blob reports + `merge-reports`) published to GitHub Pages.
