@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
-  schedule:
-    - cron: '0 3 * * *' # nightly full matrix
+  # No scheduled run: a full matrix against the rate-limited public demo fails for environmental
+  # reasons, so the full matrix is run on demand via workflow_dispatch (layer/region = all).
   workflow_dispatch:
     inputs:
       layer:
@@ -45,14 +45,14 @@ jobs:
 
           if [[ -n "$REGION" && "$REGION" != "all" ]]; then
             API_REGIONS="[\"$REGION\"]"; WEB_REGIONS="[\"$REGION\"]"
-          elif [[ "$EVENT" == "schedule" || "$EVENT" == "workflow_dispatch" ]]; then
+          elif [[ "$EVENT" == "workflow_dispatch" ]]; then
             API_REGIONS="$ALL"; WEB_REGIONS="$ALL"
           else
             # PR / push: API is cheap, so cover every region; Web runs against the isolated Docker region.
             API_REGIONS="$ALL"; WEB_REGIONS='["local"]'
           fi
 
-          if [[ "$EVENT" == "schedule" || "$EVENT" == "workflow_dispatch" ]]; then
+          if [[ "$EVENT" == "workflow_dispatch" ]]; then
             BROWSERS='["chromium","firefox"]'; SMOKE_ONLY_PUBLIC=false
           else
             # The public demo sits behind Cloudflare rate limiting: PRs run only @smoke there,

@@ -225,7 +225,9 @@ Set `DEBUG_LOGS=1` for verbose per-test logging.
 - **Pull request / push to main:** full API and Web suites (Chromium) on the isolated `local`
   container, plus `@smoke` API tests on each public region (`us`, `eu`, `uk`). Fast, and it stays within
   the public demo's rate limits.
-- **Nightly:** full matrix (all regions × Chromium and Firefox).
+- **Full matrix** (all regions × Chromium and Firefox): on demand, as a manual run with `layer` and
+  `region` = all. There's no scheduled nightly run, because a full matrix against the rate-limited public
+  demo fails for environmental reasons rather than real ones.
 - `api` and `web` are separate jobs gated by the `layer` input, each with a region matrix
   (`fail-fast: false`). The `local` region starts ParaBank as a service container.
 - A `static` job (typecheck + lint) gates both.
